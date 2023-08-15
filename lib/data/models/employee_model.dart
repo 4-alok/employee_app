@@ -3,6 +3,23 @@ import 'package:hive_flutter/adapters.dart';
 
 part 'employee_model.g.dart';
 
+extension EmployeeRoleExtension on EmployeeRole {
+  String get roleString {
+    switch (this) {
+      case EmployeeRole.productDesigner:
+        return 'Product Designer';
+      case EmployeeRole.flutterDeveloper:
+        return 'Flutter Developer';
+      case EmployeeRole.qaTester:
+        return 'QA Tester';
+      case EmployeeRole.productOwner:
+        return 'Product Owner';
+      default:
+        return '';
+    }
+  }
+}
+
 @HiveType(typeId: 1)
 enum EmployeeRole {
   @HiveField(0)
@@ -26,14 +43,14 @@ class Employee {
   @HiveField(3)
   final DateTime dateTime1;
   @HiveField(4)
-  final DateTime dateTime2;
+  final DateTime? dateTime2;
 
   const Employee({
     required this.id,
     required this.name,
     required this.role,
     required this.dateTime1,
-    required this.dateTime2,
+    this.dateTime2,
   });
 
   String get roleString {
@@ -64,33 +81,3 @@ class Employee {
         dateTime2: dateTime2 ?? this.dateTime2,
       );
 }
-
-// class Employee {
-//   String id;
-//   String name;
-//   EmployeeRole role;
-//   DateTime dateTime1;
-//   DateTime dateTime2;
-
-//   Employee({
-//     required this.id,
-//     required this.name,
-//     required this.role,
-//     required this.dateTime1,
-//     required this.dateTime2,
-//   });
-
-//   String get roleString {
-//     switch (role) {
-//       case EmployeeRole.productDesigner:
-//         return 'Product Designer';
-//       case EmployeeRole.flutterDeveloper:
-//         return 'Flutter Developer';
-//       case EmployeeRole.qaTester:
-//         return 'QA Tester';
-//       case EmployeeRole.productOwner:
-//         return 'Product Owner';
-//     }
-//   }
-// }
-

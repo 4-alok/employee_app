@@ -25,30 +25,32 @@ class EmployeeApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final boxRepo = BoxRepository();
-    return MaterialApp(
-      title: 'Employee App',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(brightness: Brightness.dark),
-      home: RepositoryProvider(
-        create: (context) => boxRepo,
-        child: FutureBuilder<void>(
-            future: boxRepo.init(),
-            builder: (context, snapshot) {
-              return (snapshot.connectionState == ConnectionState.waiting)
-                  ? const Scaffold(
-                      body: Center(child: CircularProgressIndicator()),
-                    )
-                  : MultiBlocProvider(
-                      providers: [
-                        BlocProvider(
-                          create: (context) => EmployeeBloc(
-                              RepositoryProvider.of<BoxRepository>(context))
-                            ..add(LoadEmployees()),
-                        )
-                      ],
-                      child: const Home(),
-                    );
-            }),
+    return RepositoryProvider(
+      create: (context) => boxRepo,
+      child: MultiBlocProvider(
+        providers: [
+          BlocProvider(
+            create: (context) =>
+                EmployeeBloc(RepositoryProvider.of<BoxRepository>(context))
+                  ..add(LoadEmployees()),
+          )
+        ],
+        child: MaterialApp(
+          title: 'Employee App',
+          debugShowCheckedModeBanner: false,
+          theme: ThemeData(
+              useMaterial3: false,
+              primaryColor: const Color.fromRGBO(29, 161, 242, 1)),
+          home: FutureBuilder<void>(
+              future: boxRepo.init(),
+              builder: (context, snapshot) {
+                return (snapshot.connectionState == ConnectionState.waiting)
+                    ? const Scaffold(
+                        body: Center(child: CircularProgressIndicator()),
+                      )
+                    : const Home();
+              }),
+        ),
       ),
     );
   }

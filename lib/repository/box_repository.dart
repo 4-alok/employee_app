@@ -8,7 +8,16 @@ class BoxRepository {
     box = await Hive.openBox<Employee>('employee');
   }
 
-  Future<void> addEmployee(Employee employee) async => await box.add(employee);
+  Future<void> addEmployee(Employee employee, [int? index]) async {
+    if (index == null) {
+      await box.add(employee);
+    } else {
+      final list = await getAllEmployees()
+        ..insert(index, employee);
+      await box.clear();
+      await box.addAll(list);
+    }
+  }
 
   Future<void> updateEmployee(Employee employee) async {
     final employees = box.values.toList().cast<Employee>();

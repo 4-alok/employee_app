@@ -21,7 +21,7 @@ class EmployeeAdapter extends TypeAdapter<Employee> {
       name: fields[1] as String,
       role: fields[2] as EmployeeRole,
       dateTime1: fields[3] as DateTime,
-      dateTime2: fields[4] as DateTime,
+      dateTime2: fields[4] as DateTime?,
     );
   }
 

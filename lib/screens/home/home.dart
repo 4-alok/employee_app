@@ -1,70 +1,168 @@
-import 'dart:math';
-
 import 'package:employee/bloc/employee_bloc.dart';
+import 'package:employee/data/global/extension/data_format.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_svg/svg.dart';
 
-import '../../data/global/names.dart';
 import '../../data/models/employee_model.dart';
+import '../add_update_employee/add_update_employee.dart';
+import 'widget/grouped_list.dart';
 
 class Home extends StatelessWidget {
   const Home({super.key});
 
-  String get getRandomName => names[Random().nextInt(names.length)];
-
-  EmployeeRole get getRandomRole =>
-      EmployeeRole.values[Random().nextInt(EmployeeRole.values.length)];
-
   @override
   Widget build(BuildContext context) => Scaffold(
-      appBar: AppBar(title: const Text('Employee App')),
+      appBar: AppBar(
+        elevation: 0,
+        title: const Text('Employee App'),
+        systemOverlayStyle:
+            const SystemUiOverlayStyle(statusBarColor: Colors.transparent),
+      ),
       body: BlocBuilder<EmployeeBloc, EmployeeState>(
         builder: (context, state) {
           switch (state.runtimeType) {
             case LoadingEmployees:
               return const Center(child: CircularProgressIndicator());
             case EmployeesLoaded:
-              return employeeList((state as EmployeesLoaded).employees);
+              return employeeList(
+                  context, (state as EmployeesLoaded).employees);
             default:
               return const Text('Something went wrong!');
           }
         },
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => context.read<EmployeeBloc>().add(CreateEmployee(
-              Employee(
-                name: getRandomName,
-                role: getRandomRole,
-                id: DateTime.now().millisecond.toString(),
-                dateTime1: DateTime.now(),
-                dateTime2: DateTime.now(),
-              ),
+      floatingActionButton: fab(context));
+
+  FloatingActionButton fab(BuildContext context) => FloatingActionButton(
+        elevation: 0,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(16)),
+        ),
+        onPressed: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const AddUpdateEmployee(),
             )),
         child: const Icon(Icons.add),
-      ));
-
-  Widget employeeList(List<Employee> employees) => ListView.builder(
-        itemCount: employees.length,
-        itemBuilder: (context, index) {
-          final employee = employees[index];
-          return ListTile(
-            title: Text(employee.name),
-            subtitle: Text(employee.roleString),
-            leading: CircleAvatar(
-              child: Text(employee.name[0]),
-            ),
-            trailing: IconButton(
-              icon: const Icon(Icons.delete),
-              onPressed: () =>
-                  context.read<EmployeeBloc>().add(DeleteEmployee(employee)),
-            ),
-            onTap: () => context
-                .read<EmployeeBloc>()
-                .add(UpdateEmployee(employee.copyWith(
-                  name: getRandomName,
-                  role: getRandomRole,
-                ))),
-          );
-        },
       );
+
+  Widget employeeList(BuildContext context, List<Employee> employees) =>
+      GroupedListView(
+        shrinkWrap: true,
+        elements: employees,
+        groupBy: (element) => element.dateTime2 == null
+            ? 'Current employee'
+            : 'Previous employee',
+        groupSeparatorBuilder: (String groupByValue) => Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
+          child: Text(
+            groupByValue,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              color: Theme.of(context).primaryColor,
+            ),
+          ),
+        ),
+        separator: Container(
+          height: 1,
+          color: Colors.grey[300],
+        ),
+        itemBuilder: (context, employee) => Dismissible(
+          direction: DismissDirection.endToStart,
+          key: Key(employee.id),
+          onDismissed: (dir) {
+            context.read<EmployeeBloc>().add(DeleteEmployee(employee));
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: const Text('Employee data has been deleted'),
+                action: SnackBarAction(
+                  label: 'Undo',
+                  onPressed: () => context.read<EmployeeBloc>().add(
+                      CreateEmployee(employee, employees.indexOf(employee))),
+                ),
+              ),
+            );
+          },
+          background: const SizedBox(),
+          secondaryBackground: Container(
+            color: Colors.red,
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: Padding(
+                padding: const EdgeInsets.only(right: 16),
+                child: SvgPicture.asset('assets/svg/icons/delete.svg'),
+              ),
+            ),
+          ),
+          child: employeeTile(employee, context),
+        ),
+        bottomWidget: employees.isEmpty
+            ? SizedBox(
+                height: MediaQuery.of(context).size.height * 0.8,
+                child:
+                    Center(child: SvgPicture.asset('assets/svg/no_data.svg')))
+            : const Padding(
+                padding: EdgeInsets.all(12.0),
+                child: Text(
+                  "Swipe left to delete",
+                  style: TextStyle(
+                      color: Colors.grey, fontWeight: FontWeight.w500),
+                ),
+              ),
+      );
+
+  Widget employeeTile(Employee employee, BuildContext context) => InkWell(
+        child: Container(
+          color: Colors.white,
+          width: MediaQuery.of(context).size.width,
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 8),
+                Text(
+                  employee.name,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  employee.roleString,
+                  style: const TextStyle(color: Colors.grey),
+                ),
+                const SizedBox(height: 8),
+                employee.dateTime2 == null
+                    ? Text(
+                        "From ${employee.dateTime1.to_d_MMM_yyyy}",
+                        style: const TextStyle(color: Colors.grey),
+                      )
+                    : Text(
+                        "From ${employee.dateTime1.to_d_MMMc_yyyy} - ${employee.dateTime2!.to_d_MMMc_yyyy}",
+                        style: const TextStyle(color: Colors.grey),
+                      ),
+                const SizedBox(height: 8),
+              ],
+            ),
+          ),
+        ),
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => AddUpdateEmployee(employee: employee),
+          ),
+        ),
+      );
+
+  String insert(int index, String char, String text) {
+    if (index >= 0 && index <= text.length) {
+      return text.substring(0, index) + char + text.substring(index);
+    }
+    return text;
+  }
 }

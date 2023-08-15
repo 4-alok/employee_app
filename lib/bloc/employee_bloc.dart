@@ -21,7 +21,7 @@ class EmployeeBloc extends Bloc<EmployeeEvent, EmployeeState> {
 
   Future<void> _createEmployee(
       CreateEmployee event, Emitter<EmployeeState> emit) async {
-    await boxRepository.addEmployee(event.employee);
+    await boxRepository.addEmployee(event.employee, event.index);
     emit(EmployeesLoaded(await boxRepository.getAllEmployees()));
   }
 
@@ -44,10 +44,4 @@ class EmployeeBloc extends Bloc<EmployeeEvent, EmployeeState> {
       EmployeesLoaded(employees),
     );
   }
-
-  // @override
-  // Future<void> close() async {
-  //   await boxRepository.close();
-  //   return super.close();
-  // }
 }

@@ -12,8 +12,9 @@ class LoadEmployees extends EmployeeEvent {}
 
 class CreateEmployee extends EmployeeEvent {
   final Employee employee;
+  final int? index;
 
-  const CreateEmployee(this.employee);
+  const CreateEmployee(this.employee, [this.index]);
 }
 
 class UpdateEmployee extends EmployeeEvent {
